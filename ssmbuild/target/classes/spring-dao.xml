@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       https://www.springframework.org/schema/context/spring-context.xsd">
+<!--    1、关联数据库配置文件
+        通过spring读取数据库配置文件：以前是通过mybatis读取
+-->
+    <context:property-placeholder location="classpath:database.properties"/>
+
+<!--    2、设置数据库连接池
+        原来是在mybatis配置文件中设置的
+-->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <!-- 配置连接池属性 -->
+        <property name="driverClass" value="${jdbc.driver}"/>
+        <property name="jdbcUrl" value="${jdbc.url}"/>
+        <property name="user" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <!-- c3p0连接池的私有属性 -->
+        <property name="maxPoolSize" value="30"/>
+        <property name="minPoolSize" value="10"/>
+        <!-- 关闭连接后不自动commit -->
+        <property name="autoCommitOnClose" value="false"/>
+        <!-- 获取连接超时时间 -->
+        <property name="checkoutTimeout" value="10000"/>
+        <!-- 当获取连接失败重试次数 -->
+        <property name="acquireRetryAttempts" value="2"/>
+    </bean>
+<!--    3、创建sqlSessionFactory-->
+<!--    id名字，class是由SqlSessionFactoryBean创建的sqlSessionFactory-->
+<!--    (1)第一个属性名字，关联数据库连接池-->
+<!--    (2)绑定Mybatis的配置文件-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+    </bean>
+
+<!--    下面这种方法代替了 BookMapperImpl的功能-->
+<!--    配置dao接口扫描包，动态实现Dao接口可以注入到Spring容器中-->
+<!--    以前mybatis项目中，在mybatis config文件中声明Mapper接口对应配置文件-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+<!--        注入sqlSessionFactory -->
+<!--        value 在创建sqlSessionFactory的时候，规定id名字，自动注入到这里-->
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+<!--        要扫描的dao包-->
+        <property name="basePackage" value="com.slq.dao"/>
+    </bean>
+
+</beans>
